@@ -1,36 +1,23 @@
 package MainApp;
-import java.util.Scanner;
-import SQLConnection.SQLDataBase;
-
 public class App{
 	
-	public static void main(String[] args) {
-		Scanner stdin = new Scanner(System.in);
-		System.out.println("1-Login");
-		System.out.println("2-Register");
-		byte input = stdin.nextByte();
-		switch(input) {
+	public static void main(String[] args) {	
+		 dongu : do {
+			System.out.println("1-Login");
+			System.out.println("2-Register");
+			System.out.println("3-Exit");
+			byte input = Panel.getInputByte();
+			switch (input) {
 			case 1:
-				login(stdin);
+				Panel.login();
 				break;
 			case 2:
-				register(stdin);
+				Panel.register(); // TODO REGISTERI YAP LA
 				break;
-		}
+			case 3:
+				break dongu;
+			}
+		} while (true);
 	}
-	private static void login(Scanner stdin) {
-		SQLDataBase sql = new SQLDataBase("root","admin");
-		String tc_no = stdin.next();
-		String password = stdin.next();
-		User user = sql.isUserExist(tc_no, password);
-		if(user == null) return;
-		else {
-			System.out.println(user);
-		}
-		
-	}
-	private static void register(Scanner stdin) {
-		String tc_no = stdin.next();
-		String password = stdin.next();	
-	}
-} 
+	
+}

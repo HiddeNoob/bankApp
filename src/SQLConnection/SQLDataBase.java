@@ -1,7 +1,10 @@
 package SQLConnection;
 
-import MainApp.User;
 import java.sql.*;
+import java.util.ArrayList;
+
+import userData.Account;
+import userData.User;
 public class SQLDataBase{
 
 	private Connection connect;
@@ -13,7 +16,6 @@ public class SQLDataBase{
 	private void connectDB(String username,String password) {
 		try {
 			connect = DriverManager.getConnection("jdbc:mysql://localhost:3306/bankdb",username,password);
-			System.out.println("Connected To Database");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -26,17 +28,16 @@ public class SQLDataBase{
 			statement.setString(3, turkishId);
 			statement.setString(4, password);
 			statement.executeUpdate();
-			System.out.println("user has added to database");
+			System.out.println("user added to database");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 	/**
-	 * mySQL de bulunan kullanıcının tc ile eşleşen User classı döndürür
+	 * finds the user that matchs the given parameter 
 	 */
-	public User isUserExist(String turkishId,String password) {
+	public User findUser(String turkishId,String password) {
 		try {
-			connect = DriverManager.getConnection("jdbc:mysql://localhost:3306/bankdb","root","admin");
 			statement = connect.prepareStatement("SELECT * FROM user WHERE turkish_id = ? AND password = ? ");
 			statement.setString(1, turkishId);
 			statement.setString(2, password);
@@ -44,6 +45,100 @@ public class SQLDataBase{
 			if(set.next())
 				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5));
 			else return null;
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	public User findUser(String turkishId) {
+		try {
+			statement = connect.prepareStatement("SELECT * FROM user WHERE turkish_id = ?");
+			statement.setString(1, turkishId);
+			set = statement.executeQuery();
+			if(set.next())
+				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5));
+			else return null;
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	public User findUser(int id) {
+		try {
+			statement = connect.prepareStatement("SELECT * FROM user WHERE turkish_id = ? AND password = ? ");
+			statement.setInt(1, id);
+			set = statement.executeQuery();
+			if(set.next())
+				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5));
+			else return null;
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	/**
+	 * finds the user with the same id as the given parameter and modifies the user information
+	 */
+	public void updateUser(int id,String name,String surname,String turkishId,String password) { // TODO make this method
+		try {
+			statement = connect.prepareStatement("UPDATE user SET name= ?,surname = ?,turkish_id = ?,password = ? WHERE id = ?");
+			statement.setString(1,name);
+			statement.setString(2,surname);
+			statement.setString(3,turkishId);
+			statement.setString(4,password);
+			statement.setInt(5,id);
+			statement.executeUpdate();
+			System.out.println("user updated successfully");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void createAccount(int userId,double balance) {
+		try {
+			statement = connect.prepareStatement("INSERT INTO account(user_id,balance) values(?,?)");
+			statement.setInt(1, userId);
+			statement.setDouble(2, balance);
+			statement.executeUpdate();
+			System.out.println("account added to database");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	public void deleteAccount(int accountId) {
+		try {
+			statement = connect.prepareStatement("DELETE FROM account WHERE id = ?");
+			statement.setInt(1, accountId);
+			statement.executeUpdate();
+			System.out.println("account deleted from database");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	public Account getAccount(int accountId) {
+		try {
+			statement = connect.prepareStatement("SELECT * FROM account WHERE id = ?");
+			statement.setInt(1, accountId);
+			set = statement.executeQuery();
+			if(set.next())
+				return (new Account(accountId,set.getInt(2),set.getDouble(3)));
+			else return null;
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	public ArrayList<Account> getUserAccounts(int userId){
+		try { 
+			statement = connect.prepareStatement("SELECT * FROM account WHERE user_id = ?");
+			statement.setInt(1, userId);
+			ArrayList<Account> accounts = new ArrayList<Account>();
+			set = statement.executeQuery();
+			while(set.next())
+			{
+				accounts.add(new Account(set.getInt(1), userId, set.getDouble(3)));
+			}
+			return accounts;
 		}catch(SQLException e) {
 			e.printStackTrace();
 		}
