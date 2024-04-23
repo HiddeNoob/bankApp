@@ -1,10 +1,10 @@
-package SQLConnection;
+package sqlConnection;
 
 import java.sql.*;
 import java.util.ArrayList;
 
-import userData.Account;
-import userData.User;
+import data.Account;
+import data.User;
 public class SQLDataBase{
 
 	private Connection connect;
@@ -143,5 +143,18 @@ public class SQLDataBase{
 			e.printStackTrace();
 		}
 		return null;
+	}
+	public void updateAccountBalance(int accountId,double newBalance) {
+		// UPDATE account SET balance = 10000 where id = 19;
+		try {
+			statement = connect.prepareStatement("UPDATE account SET balance = ? where id = ?;");
+			statement.setInt(2, accountId);
+			statement.setDouble(1, newBalance);
+			statement.executeUpdate();
+			System.out.println("user updated successfully");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

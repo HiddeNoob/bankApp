@@ -1,8 +1,8 @@
-package userData;
+package data;
 
 import java.util.ArrayList;
 
-import SQLConnection.SQLDataBase;
+import sqlConnection.SQLDataBase;
 
 public class User {
 	
@@ -43,6 +43,11 @@ public class User {
 	}
 	public ArrayList<Account> getAccounts() {
 		return accounts;
+	}
+	public void printAllAccounts () {
+		for (int i = 0; i < this.getAccounts().size(); i++) {
+			System.out.println((i + 1) + "- " + this.getAccounts().get(i));
+		}
 	}
 	public double getTotalMoney() {
 		double total = 0;
