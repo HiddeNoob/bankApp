@@ -21,6 +21,8 @@ import javax.swing.border.EmptyBorder;
 
 import data.User;
 import sqlConnection.SQLDataBase;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 public class Login extends JFrame {
 
@@ -32,7 +34,7 @@ public class Login extends JFrame {
 	public Login(SQLDataBase db) {
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 300);
+		setBounds(100, 100, 475, 244);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
@@ -51,30 +53,43 @@ public class Login extends JFrame {
 		usernameField = new JTextField();
 		usernameField.setToolTipText("turkiye cumhuriyeti kimlik no");
 		panel.add(usernameField);
-		usernameField.setColumns(10);
-		
-		Component verticalStrut = Box.createVerticalStrut(50);
-		contentPane.add(verticalStrut);
+		usernameField.setColumns(12);
 		
 		JPanel panel_1 = new JPanel();
 		contentPane.add(panel_1);
-		FlowLayout fl_panel_1 = new FlowLayout(FlowLayout.CENTER, 12, 12);
-		panel_1.setLayout(fl_panel_1);
+		panel_1.setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel_2 = new JPanel();
+		panel_1.add(panel_2, BorderLayout.NORTH);
+		panel_2.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 		
 		JLabel lblSifre = new JLabel("Şifre");
+		panel_2.add(lblSifre);
 		lblSifre.setHorizontalAlignment(SwingConstants.LEFT);
 		lblSifre.setFont(new Font("Yu Gothic UI Light", Font.PLAIN, 22));
-		panel_1.add(lblSifre);
 		
 		passwordField = new JPasswordField();
+		passwordField.setHorizontalAlignment(SwingConstants.LEFT);
+		panel_2.add(passwordField);
 		passwordField.setColumns(12);
-		panel_1.add(passwordField);
 		
-		Component verticalStrut_1 = Box.createVerticalStrut(40);
-		contentPane.add(verticalStrut_1);
+		JPanel panel_3 = new JPanel();
+		contentPane.add(panel_3);
 		
-		JButton btnNewButton = new JButton("Giriş Yap");
-		btnNewButton.addActionListener(new ActionListener() {
+		JButton register = new JButton("Kayıt Ol");
+		register.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Register registerPanel = new Register();
+				registerPanel.setVisible(true);
+			}
+		});
+		panel_3.add(register);
+		register.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		
+		JButton login = new JButton("Giriş Yap");
+		panel_3.add(login);
+		login.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		login.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String username;
 				String password;
@@ -93,14 +108,13 @@ public class Login extends JFrame {
 				}
 				else {
 					dispose();
-					Menu menu = new Menu(kullanici);
+					Menu menu = new Menu(kullanici,db);
 					menu.setVisible(true);
 					
 				}
 			}
 		});
-		btnNewButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-		contentPane.add(btnNewButton);
+		login.setAlignmentX(Component.CENTER_ALIGNMENT);
 	}
 
 

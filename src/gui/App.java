@@ -45,19 +45,24 @@ import javax.swing.Box;
 
 public class App{
 
-	private static SQLDataBase db = new SQLDataBase("root","admin");
+	private static SQLDataBase db;
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+					db = new SQLDataBase("root","admin");
 					Login frame = new Login(db);
 					frame.setVisible(true);
-
 				} catch (Exception e) {
-					e.printStackTrace();
+					
+					if(e instanceof com.mysql.cj.jdbc.exceptions.CommunicationsException) {
+						JOptionPane.showInternalMessageDialog(null, "Sunucuya Bağlanılamadı Daha Sonra Tekrar Deneyin");
+					}
+
 				}
 				
 			}
 		});
 	}
 }
+

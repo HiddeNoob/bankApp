@@ -10,18 +10,14 @@ public class SQLDataBase{
 	private Connection connect;
 	private PreparedStatement statement;
 	private ResultSet set;
-	public SQLDataBase(String username,String password) {
+	public SQLDataBase(String username,String password) throws Exception {
 		connectDB(username,password);
 	}
-	private void connectDB(String username,String password) {
-		try {
+	private void connectDB(String username,String password) throws Exception {
 			connect = DriverManager.getConnection("jdbc:mysql://localhost:3306/bankdb",username,password);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
 	}
-	public void createUser(String name,String surname,String turkishId,String password) {
-		try {
+	public void createUser(String name,String surname,String turkishId,String password) throws Exception {
+
 			statement = connect.prepareStatement("INSERT INTO user(name,surname,turkish_id,password) values(?,?,?,?)");
 			statement.setString(1, name);
 			statement.setString(2, surname);
@@ -29,9 +25,6 @@ public class SQLDataBase{
 			statement.setString(4, password);
 			statement.executeUpdate();
 			System.out.println("user added to database");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
 	}
 	/**
 	 * finds the user that matchs the given parameter 
@@ -43,7 +36,7 @@ public class SQLDataBase{
 			statement.setString(2, password);
 			set = statement.executeQuery();
 			if(set.next())
-				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5));
+				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5),getUserAccounts(set.getInt(1)));
 			else return null;
 		}catch(SQLException e) {
 			e.printStackTrace();
@@ -56,7 +49,7 @@ public class SQLDataBase{
 			statement.setString(1, turkishId);
 			set = statement.executeQuery();
 			if(set.next())
-				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5));
+				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5),getUserAccounts(set.getInt(1)));
 			else return null;
 		}catch(SQLException e) {
 			e.printStackTrace();
@@ -65,11 +58,11 @@ public class SQLDataBase{
 	}
 	public User findUser(int id) {
 		try {
-			statement = connect.prepareStatement("SELECT * FROM user WHERE turkish_id = ? AND password = ? ");
+			statement = connect.prepareStatement("SELECT * FROM user WHERE id = ?");
 			statement.setInt(1, id);
 			set = statement.executeQuery();
 			if(set.next())
-				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5));
+				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5),getUserAccounts(set.getInt(1)));
 			else return null;
 		}catch(SQLException e) {
 			e.printStackTrace();
