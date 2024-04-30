@@ -12,6 +12,8 @@ public class User {
 	private final String turkishId;
 	private String password;
 	ArrayList<Account> accounts;
+	
+	
 	public User(int id, String name, String surname, String turkishId, String password,ArrayList<Account> accounts){
 		this.id = id;
 		this.name = name;
@@ -59,10 +61,7 @@ public class User {
 	public void setAccounts(ArrayList<Account> acc) {
 		this.accounts = acc;
 	}
-	private ArrayList<Account> getAccountsFromDB() throws Exception {
-		return new SQLDataBase("root","admin").getUserAccounts(id);
-	}
-	
+
 	@Override
 	public String toString() {
 		return (id + " " + name + " " + surname + " " + turkishId + " " + password);

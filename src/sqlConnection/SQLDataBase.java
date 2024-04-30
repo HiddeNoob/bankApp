@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 
 import data.Account;
+import data.Transaction;
 import data.User;
 public class SQLDataBase{
 
@@ -35,8 +36,11 @@ public class SQLDataBase{
 			statement.setString(1, turkishId);
 			statement.setString(2, password);
 			set = statement.executeQuery();
-			if(set.next())
-				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5),getUserAccounts(set.getInt(1)));
+			int userId;
+			if(set.next()) {
+				userId = set.getInt(1);
+				return new User(userId,set.getString(2),set.getString(3),set.getString(4),set.getString(5),getUserAccounts(userId));
+			}
 			else return null;
 		}catch(SQLException e) {
 			e.printStackTrace();
@@ -48,8 +52,9 @@ public class SQLDataBase{
 			statement = connect.prepareStatement("SELECT * FROM user WHERE turkish_id = ?");
 			statement.setString(1, turkishId);
 			set = statement.executeQuery();
+			int userId = set.getInt(1); // getInt fonksyionunu iki kere çağıramadığım için buraya veriyi kaydettım
 			if(set.next())
-				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5),getUserAccounts(set.getInt(1)));
+				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5),getUserAccounts(userId));
 			else return null;
 		}catch(SQLException e) {
 			e.printStackTrace();
@@ -61,6 +66,7 @@ public class SQLDataBase{
 			statement = connect.prepareStatement("SELECT * FROM user WHERE id = ?");
 			statement.setInt(1, id);
 			set = statement.executeQuery();
+		
 			if(set.next())
 				return new User(set.getInt(1),set.getString(2),set.getString(3),set.getString(4),set.getString(5),getUserAccounts(set.getInt(1)));
 			else return null;
@@ -72,7 +78,7 @@ public class SQLDataBase{
 	/**
 	 * finds the user with the same id as the given parameter and modifies the user information
 	 */
-	public void updateUser(int id,String name,String surname,String turkishId,String password) { // TODO make this method
+	public void updateUser(int id,String name,String surname,String turkishId,String password) { 
 		try {
 			statement = connect.prepareStatement("UPDATE user SET name= ?,surname = ?,turkish_id = ?,password = ? WHERE id = ?");
 			statement.setString(1,name);
@@ -114,7 +120,7 @@ public class SQLDataBase{
 			statement.setInt(1, accountId);
 			set = statement.executeQuery();
 			if(set.next())
-				return (new Account(accountId,set.getInt(2),set.getDouble(3)));
+				return (new Account(accountId,set.getInt(2),set.getDouble(3),getAccountTransactions(set.getInt(1))));
 			else return null;
 		}catch(SQLException e) {
 			e.printStackTrace();
@@ -129,7 +135,7 @@ public class SQLDataBase{
 			set = statement.executeQuery();
 			while(set.next())
 			{
-				accounts.add(new Account(set.getInt(1), userId, set.getDouble(3)));
+				accounts.add(new Account(set.getInt(1), userId, set.getDouble(3),getAccountTransactions(set.getInt(1))));
 			}
 			return accounts;
 		}catch(SQLException e) {
@@ -137,6 +143,24 @@ public class SQLDataBase{
 		}
 		return null;
 	}
+	public ArrayList<Transaction> getAccountTransactions(int accountId){
+		try { 
+			statement = connect.prepareStatement("SELECT * FROM transaction WHERE receiver_id = ? or sender_id = ?;");
+			statement.setInt(1, accountId);
+			statement.setInt(2, accountId);
+			ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+			ResultSet anotherSet = statement.executeQuery();
+			while(anotherSet.next())
+			{
+				transactions.add(new Transaction(anotherSet.getInt(1),anotherSet.getInt(2),anotherSet.getInt(3),anotherSet.getDouble(4),anotherSet.getDate(5)));
+			}
+			return transactions;
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public void updateAccountBalance(int accountId,double newBalance) {
 		// UPDATE account SET balance = 10000 where id = 19;
 		try {

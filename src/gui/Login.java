@@ -1,13 +1,11 @@
 package gui;
 
 import java.awt.Component;
-import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -22,7 +20,6 @@ import javax.swing.border.EmptyBorder;
 import data.User;
 import sqlConnection.SQLDataBase;
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 
 public class Login extends JFrame {
 
@@ -98,7 +95,7 @@ public class Login extends JFrame {
 					username = usernameField.getText();
 					password = passwordField.getText();
 					kullanici = db.findUser(username,password);
-		
+					
 					
 				} catch (Exception e1) {
 					e1.printStackTrace();
@@ -109,6 +106,7 @@ public class Login extends JFrame {
 				else {
 					dispose();
 					Menu menu = new Menu(kullanici,db);
+					kullanici.printAllAccounts();
 					menu.setVisible(true);
 					
 				}
