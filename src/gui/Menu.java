@@ -55,8 +55,12 @@ public class Menu extends JFrame {
 	TableModel accountTable;
 	private String[] accountTableTitle = new String[] {"id","balance"};
 	private JLabel balanceText;
-	public Menu(User currentUser,SQLDataBase db) {
-
+	private User currentUser;
+	private SQLDataBase db;
+	private JLabel welcomeText;
+	public Menu(User user,SQLDataBase dbLink) {
+		this.db = dbLink;
+		this.currentUser = user;
 		accountTable = new DefaultTableModel(convertAccountsToList(currentUser),accountTableTitle) {
 			    @Override
 			    public boolean isCellEditable(int row, int column) {
@@ -81,7 +85,7 @@ public class Menu extends JFrame {
 		JPanel panel_1 = new JPanel();
 		panel.add(panel_1, BorderLayout.NORTH);
 		
-		JLabel welcomeText = new JLabel("Hoşgeldin " + currentUser.getName() + "!");
+		welcomeText = new JLabel("Hoşgeldin " + currentUser.getName() + "!");
 		panel_1.add(welcomeText);
 		welcomeText.setHorizontalAlignment(SwingConstants.CENTER);
 		welcomeText.setFont(new Font("Tahoma", Font.PLAIN, 16));
@@ -105,7 +109,7 @@ public class Menu extends JFrame {
 				
 				try {
 					Account selectedAccount = currentUser.getAccounts().get(accountsPane.getSelectedRow());
-					String input = JOptionPane.showInputDialog(buttonWithdraw, "Seçilen Hesap No: " + selectedAccount.getAccountId() + "\nHesap Bakiyesi: " + selectedAccount.getBalance() + "\nNe kadar para çekmek istiyorsunuz");
+					String input = JOptionPane.showInputDialog(buttonWithdraw, "Seçilen Hesap No: " + selectedAccount.getAccountId() + "\nHesap Bakiyesi: " + selectedAccount.getBalance() + "\nÇekilecek tutar");
 					double dInput = Double.parseDouble(input);
 					if(dInput <= 0) {
 						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
@@ -115,11 +119,11 @@ public class Menu extends JFrame {
 					}
 					else {
 						db.updateAccountBalance(selectedAccount.getAccountId(),selectedAccount.getBalance() - dInput);
-						fetchAppWithDatabase(currentUser, db);
+						fetchAppWithDatabase();
 					}
 				}catch(Exception e1){
 					if(e1 instanceof java.lang.IndexOutOfBoundsException) {
-						JOptionPane.showMessageDialog(null, "Lütfen listeden para çekilecek bir hesap seçiniz");
+						JOptionPane.showMessageDialog(null, "Lütfen listeden hesap seçiniz");
 					}
 					else if(e1 instanceof java.lang.NumberFormatException){
 						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
@@ -135,7 +139,25 @@ public class Menu extends JFrame {
 		buttonDeposit.setFont(new Font("Tahoma", Font.PLAIN, 17));
 		buttonDeposit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
+				try {
+					Account selectedAccount = currentUser.getAccounts().get(accountsPane.getSelectedRow());
+					String input = JOptionPane.showInputDialog(buttonWithdraw, "Seçilen Hesap No: " + selectedAccount.getAccountId() + "\nHesap Bakiyesi: " + selectedAccount.getBalance() + "\nYatırılacak tutar");
+					double dInput = Double.parseDouble(input);
+					if(dInput <= 0) {
+						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
+					}
+					else {
+						db.updateAccountBalance(selectedAccount.getAccountId(),selectedAccount.getBalance() + dInput);
+						fetchAppWithDatabase();
+					}
+				}catch(Exception e1){
+					if(e1 instanceof java.lang.IndexOutOfBoundsException) {
+						JOptionPane.showMessageDialog(null, "Lütfen listeden hesap seçiniz");
+					}
+					else if(e1 instanceof java.lang.NumberFormatException){
+						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
+					}
+				}
 			}
 		});
 		Buttons.add(buttonDeposit);
@@ -148,13 +170,35 @@ public class Menu extends JFrame {
 		buttonCreateAccount.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				db.createAccount(currentUser.getId() , 0 );
-				fetchAppWithDatabase(currentUser, db);
+				fetchAppWithDatabase();
 			}
 		});
 		buttonCreateAccount.setFont(new Font("Tahoma", Font.PLAIN, 17));
 		Buttons.add(buttonCreateAccount);
 		
 		JButton buttonDeleteAccount = new JButton("Hesap Sil");
+		buttonDeleteAccount.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				if(accountsPane.getSelectedRows().length != 0) { // kullanıcı hesap seçmediyse hata oluştur
+					if(accountsPane.getSelectedRows().length == currentUser.getAccounts().size()) {
+						JOptionPane.showMessageDialog(null, "Tüm hesaplarınızı silemezsiniz");
+					}
+					else {
+						int silinenHesaplardakiPara = 0;
+						for(int x : accountsPane.getSelectedRows()) {
+							db.deleteAccount(currentUser.getAccounts().get(x).getAccountId()); // listede x. elemanda bulunan hesabı sil
+							silinenHesaplardakiPara += currentUser.getAccounts().get(x).getBalance();
+						}
+						db.updateAccountBalance(db.getUserAccounts(currentUser.getId()).get(0).getAccountId(), silinenHesaplardakiPara + db.getUserAccounts(currentUser.getId()).get(0).getBalance()); // kalan hesaplarda ilk hesaba silinen hesaplardaki bakiyeyi aktar
+						fetchAppWithDatabase();
+					}
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "Lütfen listeden silenecek hesap(lar) seçiniz");
+				}
+			}
+		});
 		buttonDeleteAccount.setFont(new Font("Tahoma", Font.PLAIN, 17));
 		Buttons.add(buttonDeleteAccount);
 		
@@ -204,10 +248,17 @@ public class Menu extends JFrame {
 		return test;
 	}
 	
-	private void fetchAppWithDatabase(User currentUser,SQLDataBase db) {
+	private void fetchAppWithDatabase() {
+		currentUser = db.findUser(currentUser.getId());
+		accountTable = new DefaultTableModel(convertAccountsToList(currentUser),accountTableTitle) {
+		    @Override
+		    public boolean isCellEditable(int row, int column) {
+		       //all cells false
+		       return false;
+		    }
+		};
+		balanceText.setText("Mevcut Bakiyeniz " + currentUser.getTotalMoney() + "₺");
 
-		super.update(this.getGraphics());
-		
-		
+		accountsPane.setModel(accountTable);
 	}
 }

@@ -81,7 +81,7 @@ public class SQLDataBase{
 			statement.setString(4,password);
 			statement.setInt(5,id);
 			statement.executeUpdate();
-			System.out.println("user updated successfully");
+			System.out.println( "user updated successfully " + "that has id : " + turkishId);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -103,7 +103,7 @@ public class SQLDataBase{
 			statement = connect.prepareStatement("DELETE FROM account WHERE id = ?");
 			statement.setInt(1, accountId);
 			statement.executeUpdate();
-			System.out.println("account deleted from database");
+			System.out.println("account deleted from database, id : " + accountId);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -144,7 +144,7 @@ public class SQLDataBase{
 			statement.setInt(2, accountId);
 			statement.setDouble(1, newBalance);
 			statement.executeUpdate();
-			System.out.println("user updated successfully");
+			System.out.println("account updated successfully,account id : " + accountId + " new balance: " + newBalance);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

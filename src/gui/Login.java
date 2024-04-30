@@ -34,7 +34,7 @@ public class Login extends JFrame {
 	public Login(SQLDataBase db) {
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 475, 244);
+		setBounds(100, 100, 282, 212);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
@@ -79,7 +79,7 @@ public class Login extends JFrame {
 		JButton register = new JButton("Kayıt Ol");
 		register.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Register registerPanel = new Register();
+				Register registerPanel = new Register(db);
 				registerPanel.setVisible(true);
 			}
 		});

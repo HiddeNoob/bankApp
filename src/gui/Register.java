@@ -13,6 +13,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import net.miginfocom.swing.MigLayout;
+import sqlConnection.SQLDataBase;
+
 import java.awt.Font;
 import javax.swing.SwingConstants;
 import javax.swing.JTextField;
@@ -44,7 +46,8 @@ public class Register extends JFrame {
 	private JTextField inputSifre2;
 
 
-	public Register() {
+	public Register(SQLDataBase db) {
+		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 360, 318);
 		contentPane = new JPanel();
@@ -151,12 +154,12 @@ public class Register extends JFrame {
 				else if(!isSuitableForName(inputSoyad.getText())){
 					JOptionPane.showInternalMessageDialog(null, "Soyisminiz italik karakterlerden oluşmalıdır");
 				}
-				else {
+				else { 
 					try {
-						sqlConnection.SQLDataBase db = new sqlConnection.SQLDataBase("root", "admin");
 						db.createUser(inputAd.getText(),  inputSoyad.getText() , inputTCNo.getText(), inputSifre.getText());
-
-						
+						JOptionPane.showInternalMessageDialog(null,"Hesabınız başarıyla oluşturuldu");
+						db.createAccount(db.findUser(inputTCNo.getText()).getId(), 0);
+						dispose();
 					} catch (Exception e2) {
 						if(e2 instanceof java.sql.SQLIntegrityConstraintViolationException)
 						{
