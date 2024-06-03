@@ -30,6 +30,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.awt.Frame;
 
 public class Menu extends JFrame {
@@ -38,6 +39,8 @@ public class Menu extends JFrame {
 
 	private JPanel contentPane;
 	private JTable accountsPane;
+
+	private int recentSelectedAccount = 0;
 	private TableModel accountTable;
 	private TableModel transactionTable;
 	private String[] accountTableTitle = new String[] {"Hesap Kodu","Bakiye"};
@@ -110,7 +113,7 @@ public class Menu extends JFrame {
 				
 				try {
 					Account selectedAccount = currentUser.getAccounts().get(accountsPane.getSelectedRow());
-					String input = JOptionPane.showInputDialog(buttonWithdraw, "Seçilen Hesap No: " + selectedAccount.getAccountId() + "\nHesap Bakiyesi: " + selectedAccount.getBalance() + "\nÇekilecek tutar");
+					String input = JOptionPane.showInputDialog(buttonWithdraw, "Seçilen Hesap No: " + selectedAccount.getID() + "\nHesap Bakiyesi: " + selectedAccount.getBalance() + "\nÇekilecek tutar");
 					double dInput = Double.parseDouble(input);
 					if(dInput <= 0) {
 						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
@@ -119,7 +122,8 @@ public class Menu extends JFrame {
 						JOptionPane.showMessageDialog(null, "Bakiyenizden fazla para çekemezsiniz");
 					}
 					else {
-						db.updateAccountBalance(selectedAccount.getAccountId(),selectedAccount.getBalance() - dInput);
+						db.updateAccountBalance(selectedAccount.getID(),selectedAccount.getBalance() - dInput);
+						db.createTransaction(selectedAccount.getID(), selectedAccount.getID(), -dInput);
 						fetchAppWithDatabase();
 					}
 				}catch(Exception e1){
@@ -129,6 +133,9 @@ public class Menu extends JFrame {
 					else if(e1 instanceof java.lang.NumberFormatException){
 						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
 					}
+					else {
+						e1.printStackTrace();
+					}	
 				}
 				
 			}
@@ -142,13 +149,14 @@ public class Menu extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					Account selectedAccount = currentUser.getAccounts().get(accountsPane.getSelectedRow());
-					String input = JOptionPane.showInputDialog(buttonWithdraw, "Seçilen Hesap No: " + selectedAccount.getAccountId() + "\nHesap Bakiyesi: " + selectedAccount.getBalance() + "\nYatırılacak tutar");
+					String input = JOptionPane.showInputDialog(buttonWithdraw, "Seçilen Hesap No: " + selectedAccount.getID() + "\nHesap Bakiyesi: " + selectedAccount.getBalance() + "\nYatırılacak tutar");
 					double dInput = Double.parseDouble(input);
 					if(dInput <= 0) {
-						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
+						throw new NumberFormatException();
 					}
 					else {
-						db.updateAccountBalance(selectedAccount.getAccountId(),selectedAccount.getBalance() + dInput);
+						db.updateAccountBalance(selectedAccount.getID(),selectedAccount.getBalance() + dInput);
+						db.createTransaction(selectedAccount.getID(), selectedAccount.getID(), dInput);
 						fetchAppWithDatabase();
 					}
 				}catch(Exception e1){
@@ -158,20 +166,84 @@ public class Menu extends JFrame {
 					else if(e1 instanceof java.lang.NumberFormatException){
 						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
 					}
+					else {
+						e1.printStackTrace();
+					}
 				}
 			}
 		});
 		Buttons.add(buttonDeposit);
 		
 		JButton buttonSendMoney = new JButton("EFT ile para gönder");
+		buttonSendMoney.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					Account selectedAccount = currentUser.getAccounts().get(accountsPane.getSelectedRow());
+					TwoInputPanel inputPanel= new TwoInputPanel("<html>Seçilen Hesap No: " + selectedAccount.getID() + "<br>Seçilen Hesap Bakiye : " + selectedAccount.getBalance() + "TL</html>","Alıcı Hesap Numarası","Gönderilecek Tutar","Gönder","İptal");
+					inputPanel.setLeftButtonFunction(new ActionListener() {
+						
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							
+							int receiverId;
+							double tutar;
+							try {
+								receiverId = Integer.parseInt(inputPanel.getFirstRowText());
+								tutar = Double.parseDouble(inputPanel.getSecondRowText());
+								if(tutar <= 0) {
+									throw new Exception("mal negatif para mı gönderilir");
+								}
+								if(tutar > selectedAccount.getBalance()) {
+									throw new Exception("parandan cok para nasıl gondercen");
+								}
+								if(db.getAccount(receiverId) != null) {
+									db.updateAccountBalance(receiverId, db.getAccount(receiverId).getBalance() + tutar);
+									db.updateAccountBalance(selectedAccount.getID(), selectedAccount.getBalance() - tutar);
+									db.createTransaction(currentUser.getId(), receiverId, tutar);
+									fetchAppWithDatabase();
+								}
+							}catch(Exception ex) {
+								ex.printStackTrace();
+							}
+							
+							inputPanel.dispose();
+							
+						}
+					});
+
+					inputPanel.setRightButtonFunction(new ActionListener() {
+						
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							inputPanel.dispose();
+							
+						}
+					});
+				}catch(Exception e1){
+					if(e1 instanceof java.lang.IndexOutOfBoundsException) {
+						JOptionPane.showMessageDialog(null, "Lütfen listeden hesap seçiniz");
+					}
+					else if(e1 instanceof java.lang.NumberFormatException){
+						JOptionPane.showMessageDialog(null, "Geçerli bir sayı giriniz");
+					}
+					else {
+						e1.printStackTrace();
+					}
+				}
+				
+			}});
 		buttonSendMoney.setFont(new Font("Tahoma", Font.PLAIN, 17));
 		Buttons.add(buttonSendMoney);
 		
 		JButton buttonCreateAccount = new JButton("Hesap Oluştur");
 		buttonCreateAccount.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				db.createAccount(currentUser.getId() , 0 );
-				fetchAppWithDatabase();
+				try {
+					db.createAccount(currentUser.getId() , 0 );
+					fetchAppWithDatabase();
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
 		buttonCreateAccount.setFont(new Font("Tahoma", Font.PLAIN, 17));
@@ -187,12 +259,18 @@ public class Menu extends JFrame {
 					}
 					else {
 						int silinenHesaplardakiPara = 0;
-						for(int x : accountsPane.getSelectedRows()) {
-							db.deleteAccount(currentUser.getAccounts().get(x).getAccountId()); // listede x. elemanda bulunan hesabı sil
-							silinenHesaplardakiPara += currentUser.getAccounts().get(x).getBalance();
+						
+						try {
+							for(int x : accountsPane.getSelectedRows()) {
+								db.deleteAccount(currentUser.getAccounts().get(x).getID()); // listede x. elemanda bulunan hesabı sil
+								silinenHesaplardakiPara += currentUser.getAccounts().get(x).getBalance();
+							}
+							db.updateAccountBalance(db.getUserAccounts(currentUser.getId()).get(0).getID(), silinenHesaplardakiPara + db.getUserAccounts(currentUser.getId()).get(0).getBalance()); // kalan hesaplarda ilk hesaba silinen hesaplardaki bakiyeyi aktar
+							fetchAppWithDatabase();
+						} catch (Exception e2) {
+							e2.printStackTrace();
 						}
-						db.updateAccountBalance(db.getUserAccounts(currentUser.getId()).get(0).getAccountId(), silinenHesaplardakiPara + db.getUserAccounts(currentUser.getId()).get(0).getBalance()); // kalan hesaplarda ilk hesaba silinen hesaplardaki bakiyeyi aktar
-						fetchAppWithDatabase();
+					
 					}
 				}
 				else {
@@ -222,7 +300,8 @@ public class Menu extends JFrame {
 		accountsPane.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				transactionTable = new DefaultTableModel(convertTransactionsToList(currentUser.getAccounts().get(accountsPane.getSelectedRow())),transactionTableTitle) {
+				recentSelectedAccount = accountsPane.getSelectedRow() == -1 ? recentSelectedAccount : accountsPane.getSelectedRow();
+				transactionTable = new DefaultTableModel(convertTransactionsToList(currentUser.getAccounts().get(recentSelectedAccount)),transactionTableTitle) {
 				    @Override
 				    public boolean isCellEditable(int row, int column) {
 				       //all cells false
@@ -238,56 +317,61 @@ public class Menu extends JFrame {
 		accountsPane.setDragEnabled(false);
 		accountsPane.setRowHeight(32);
 		
-			accountsPane.setShowGrid(false);
-			accountsPane.setShowVerticalLines(false);
-			accountsPane.setFont(new Font("Tahoma", Font.PLAIN, 22));
-			accountsPane.setModel(accountTable);
-			leftPane.setViewportView(accountsPane);
-			
-			JLabel leftPaneTopText = new JLabel("Hesaplarınız");
-			leftPaneTopText.setFont(new Font("Tahoma", Font.PLAIN, 24));
-			leftPaneTopText.setHorizontalAlignment(SwingConstants.CENTER);
-			leftPaneUpper.add(leftPaneTopText, BorderLayout.NORTH);
-			
-			JPanel panel_2 = new JPanel();
-			splitPane.setRightComponent(panel_2);
-			panel_2.setLayout(new BorderLayout(0, 0));
-			
-			JLabel rightPaneTopText = new JLabel("İşlem Geçmişi");
-			rightPaneTopText.setFont(new Font("Tahoma", Font.PLAIN, 24));
-			rightPaneTopText.setHorizontalAlignment(SwingConstants.CENTER);
-			panel_2.add(rightPaneTopText, BorderLayout.NORTH);
-			
-			JScrollPane scrollPane = new JScrollPane();
-			panel_2.add(scrollPane, BorderLayout.CENTER);
-			
-			transactionPane = new JTable();
-			transactionPane.setRowHeight(26);
-			transactionPane.setFillsViewportHeight(true);
-			transactionPane.setShowGrid(false);
-			transactionPane.setRowSelectionAllowed(false);
-			transactionPane.setFont(new Font("Tahoma", Font.PLAIN, 22));
-			transactionPane.setModel(transactionTable);
-			scrollPane.setViewportView(transactionPane);
+		accountsPane.setShowGrid(false);
+		accountsPane.setShowVerticalLines(false);
+		accountsPane.setFont(new Font("Tahoma", Font.PLAIN, 22));
+		accountsPane.setModel(accountTable);
+		leftPane.setViewportView(accountsPane);
+		
+		JLabel leftPaneTopText = new JLabel("Hesaplarınız");
+		leftPaneTopText.setFont(new Font("Tahoma", Font.PLAIN, 24));
+		leftPaneTopText.setHorizontalAlignment(SwingConstants.CENTER);
+		leftPaneUpper.add(leftPaneTopText, BorderLayout.NORTH);
+		
+		JPanel panel_2 = new JPanel();
+		splitPane.setRightComponent(panel_2);
+		panel_2.setLayout(new BorderLayout(0, 0));
+		
+		JLabel rightPaneTopText = new JLabel("İşlem Geçmişi");
+		rightPaneTopText.setFont(new Font("Tahoma", Font.PLAIN, 24));
+		rightPaneTopText.setHorizontalAlignment(SwingConstants.CENTER);
+		panel_2.add(rightPaneTopText, BorderLayout.NORTH);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		panel_2.add(scrollPane, BorderLayout.CENTER);
+		
+		transactionPane = new JTable();
+		transactionPane.setRowHeight(26);
+		transactionPane.setFillsViewportHeight(true);
+		transactionPane.setShowGrid(false);
+		transactionPane.setRowSelectionAllowed(false);
+		transactionPane.setFont(new Font("Tahoma", Font.PLAIN, 22));
+		transactionPane.setModel(transactionTable);
+		scrollPane.setViewportView(transactionPane);
 	}
 	
 	private String[][] convertAccountsToList(User user){
 		String [][] test = new String[user.getAccounts().size()][accountTableTitle.length];
 		
 		for(int i = 0 ; i < user.getAccounts().size() ; i++) {
-			test[i][0] = user.getAccounts().get(i).getAccountId() + ""; // int i hızlıca stringe çevirmek için boş string ile toplama yaptım
+			test[i][0] = user.getAccounts().get(i).getID() + ""; // int i hızlıca stringe çevirmek için boş string ile toplama yaptım
 			test[i][1] = user.getAccounts().get(i).getBalance() + ""; 
 		}
 		return test;
 	}
-	
 	private String[][] convertTransactionsToList(Account account){
+		
+		if(account == null) {
+
+			return new String[0][transactionTableTitle.length];
+		}
+
 		String [][] test = new String[account.getTransactions().size()][transactionTableTitle.length];
 		for(int i = 0; i < account.getTransactions().size(); i++) {
 			test[i][0] = account.getTransactions().get(i).getId() + "";
 			test[i][1] = createDescriptionForTransactionColumn(account.getTransactions().get(i),account);
 			test[i][2] = account.getTransactions().get(i).getAmount() + "";
-			test[i][3] = account.getTransactions().get(i).getDate().toString() + "";
+			test[i][3] = account.getTransactions().get(i).getDate().toString().substring(0, 19) + "";
 		}
 		return test;
 		
@@ -303,7 +387,7 @@ public class Menu extends JFrame {
 			}
 		}
 		else {
-			if(t.getSenderId() == account.getAccountId()) {
+			if(t.getSenderId() == account.getID()) {
 				return "Gönderilen Para";
 			}
 			else {
@@ -311,7 +395,7 @@ public class Menu extends JFrame {
 			}
 		}
 	}
-	private void fetchAppWithDatabase() {
+	private void fetchAppWithDatabase() throws SQLException {
 		currentUser = db.findUser(currentUser.getId());
 		accountTable = new DefaultTableModel(convertAccountsToList(currentUser),accountTableTitle) {
 		    @Override
@@ -320,8 +404,18 @@ public class Menu extends JFrame {
 		       return false;
 		    }
 		};
+		accountsPane.setModel(accountTable);
+
+		transactionTable = new DefaultTableModel(convertTransactionsToList(currentUser.getAccounts().get(recentSelectedAccount)),transactionTableTitle) { // user row seçmemiş olabilir default olarak ilk satırdaki hesap işlemlerini dönder
+		    @Override
+		    public boolean isCellEditable(int row, int column) {
+		       //all cells false
+		       return false;
+		    }
+		};
+		transactionPane.setModel(transactionTable);
 		balanceText.setText("Mevcut Bakiyeniz " + currentUser.getTotalMoney() + "₺");
 
-		accountsPane.setModel(accountTable);
+		
 	}
 }

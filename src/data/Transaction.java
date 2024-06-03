@@ -1,7 +1,8 @@
 package data;
 
 import java.util.ArrayList;
-import java.util.Date;
+
+import java.sql.Timestamp;
 
 
 public class Transaction {
@@ -9,8 +10,8 @@ public class Transaction {
 	private int receiver_id;
 	private int sender_id;
 	private double amount;
-	private Date date;
-	public Transaction(int id, int receiver_id, int sender_id, double amount, Date date) {
+	private Timestamp date;
+	public Transaction(int id, int receiver_id, int sender_id, double amount, Timestamp date) {
 		super();
 		this.id = id;
 		this.receiver_id = receiver_id;
@@ -30,7 +31,7 @@ public class Transaction {
 	public double getAmount() {
 		return amount;
 	}
-	public Date getDate() {
+	public Timestamp getDate() {
 		return date;
 	}
 

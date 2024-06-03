@@ -106,7 +106,7 @@ public class Login extends JFrame {
 				else {
 					dispose();
 					Menu menu = new Menu(kullanici,db);
-					kullanici.printAllAccounts();
+
 					menu.setVisible(true);
 					
 				}

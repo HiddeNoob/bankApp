@@ -15,7 +15,7 @@ public class Account {
 		this.balance = balance;
 		this.transactions = transactions;
 	}
-	public int getAccountId() {
+	public int getID() {
 		return this.id;
 	}
 	public int getUserId() {
